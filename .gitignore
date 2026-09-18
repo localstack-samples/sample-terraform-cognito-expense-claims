@@ -1,0 +1,12 @@
+node_modules/
+dist/
+web/.env.local
+.env
+*.log
+.DS_Store
+terraform/.terraform/
+terraform/.terraform.lock.hcl
+terraform/terraform.tfstate*
+terraform/localstack_providers_override.tf
+terraform/*.zip
+api/dist/

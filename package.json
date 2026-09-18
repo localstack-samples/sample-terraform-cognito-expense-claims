@@ -1,0 +1,25 @@
+{
+  "name": "sample-terraform-cognito-expense-claims",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "engines": { "node": ">=22.12" },
+  "workspaces": ["web", "api"],
+  "scripts": {
+    "build:api": "npm run build --workspace api",
+    "configure": "tsx scripts/configure.ts",
+    "dev": "npm run dev --workspace web",
+    "payroll-export": "tsx scripts/payroll-export.ts",
+    "totp": "tsx scripts/totp.ts",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@aws-sdk/client-cognito-identity-provider": "^3.900.0",
+    "@aws-sdk/client-dynamodb": "^3.900.0",
+    "@types/node": "^24.13.3",
+    "otpauth": "^9.4.0",
+    "tsx": "^4.20.0",
+    "typescript": "~6.0.2",
+    "vitest": "^4.0.0"
+  }
+}
