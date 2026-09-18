@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { completeHostedUiSignIn, restoreHostedUiSession, signInWithHostedUi, signOutOfHostedUi } from "./auth/oidc";
 import type { Session } from "./auth/session";
 import { config } from "./config";
@@ -13,8 +13,13 @@ export default function App() {
   const [view, setView] = useState<View>("claims");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const booted = useRef(false);
 
   useEffect(() => {
+    // React StrictMode runs effects twice in development; the code in the
+    // callback URL can only be exchanged once, so guard the boot sequence.
+    if (booted.current) return;
+    booted.current = true;
     const boot = window.location.pathname === "/callback" ? completeHostedUiSignIn() : restoreHostedUiSession();
     boot
       .then((s) => s && setSession(s))
