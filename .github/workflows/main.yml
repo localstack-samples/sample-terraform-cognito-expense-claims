@@ -1,0 +1,92 @@
+name: Deploy on LocalStack with Terraform
+
+on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - 'README.md'
+  pull_request:
+    branches:
+      - main
+  schedule:
+    # At 00:00 on Sunday.
+    - cron: '0 0 * * 0'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  integration-tests:
+    name: Deploy and run the integration tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      LOCALSTACK_AUTH_TOKEN: ${{ secrets.LOCALSTACK_AUTH_TOKEN }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          # scripts/configure.ts parses `terraform output -json`; the wrapper would add extra output.
+          terraform_wrapper: false
+
+      - name: Install dependencies
+        run: |
+          npm ci
+          npm install -g @localstack/lstk
+
+      - name: Start LocalStack
+        run: lstk start
+
+      - name: Check the prerequisites
+        run: make check
+
+      - name: Deploy the stack
+        run: make deploy
+
+      - name: Run the integration tests
+        run: make test
+
+      - name: Run the payroll export
+        run: make export
+
+      - name: Build the SPA
+        run: npm run build --workspace web
+
+      - name: Show LocalStack logs
+        if: always()
+        run: lstk logs --verbose | tail -n 300
+
+      - name: Generate a diagnostic report
+        if: failure()
+        run: curl -s localhost:4566/_localstack/diagnose | gzip -cf > diagnose.json.gz
+
+      - name: Upload the diagnostic report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: diagnose.json.gz
+          path: ./diagnose.json.gz
+
+      - name: Send a Slack notification
+        if: failure() || github.event_name != 'pull_request'
+        uses: ravsamhq/notify-slack-action@v2
+        with:
+          status: ${{ job.status }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+          notification_title: "{workflow} has {status_message}"
+          message_format: "{emoji} *{workflow}* {status_message} in <{repo_url}|{repo}>"
+          footer: "Linked Repo <{repo_url}|{repo}> | <{run_url}|View Workflow run>"
+          notify_when: "failure"
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
