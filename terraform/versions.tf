@@ -17,4 +17,10 @@ terraform {
 # with real credentials and `-var localstack=false` to deploy to AWS.
 provider "aws" {
   region = var.aws_region
+
+  default_tags {
+    tags = {
+      aws-apn-id = "pc:9yq38ki5jw5mas7jhjthpgveo"
+    }
+  }
 }

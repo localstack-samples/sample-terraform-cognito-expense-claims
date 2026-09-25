@@ -49,6 +49,8 @@ LOCALSTACK_EXTRA_CORS_ALLOWED_ORIGINS=http://localhost:5173 lstk start
 ## Install and deploy
 
 ```bash
+git clone https://github.com/localstack-samples/sample-terraform-cognito-expense-claims.git
+cd sample-terraform-cognito-expense-claims
 make install     # npm install
 make deploy      # bundles the Lambda, lstk terraform init + apply, writes .env and web/.env.local
 ```
